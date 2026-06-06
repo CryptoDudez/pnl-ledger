@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>P&L Ledger — Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0e0e;--s1:#161616;--s2:#1e1e1e;--s3:#252525;--s4:#2d2d2d;
+  --b1:#2a2a2a;--b2:#363636;
+  --t1:#f0f0f0;--t2:#a0a0a0;--t3:#606060;
+  --green:#22c55e;--gc:rgba(34,197,94,.12);--gb:rgba(34,197,94,.3);
+  --red:#ef4444;--rc:rgba(239,68,68,.12);--rb:rgba(239,68,68,.3);
+  --gold:#f59e0b;--goc:rgba(245,158,11,.12);--gob:rgba(245,158,11,.3);
+  --accent:#3b82f6;
+}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{background:var(--s2);border:1px solid var(--b1);border-radius:16px;padding:32px;width:100%;max-width:380px;text-align:center}
+.login-logo{font-size:28px;margin-bottom:6px}
+.login-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--t3);margin-bottom:24px}
+.login-input{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:14px;padding:11px 14px;outline:none;margin-bottom:10px;font-family:inherit;transition:border-color .15s}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;background:var(--green);border:none;color:#000;border-radius:8px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;min-height:16px}
+
+/* DASHBOARD */
+#dashboard{display:none;min-height:100vh}
+.topbar{background:var(--s1);border-bottom:1px solid var(--b1);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-logo{font-size:15px;font-weight:800;color:var(--t1)}
+.topbar-badge{font-size:10px;font-weight:700;background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--rb);padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-btn{background:var(--s3);border:1px solid var(--b2);color:var(--t1);border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.topbar-btn:hover{background:var(--s4)}
+.topbar-btn.danger{background:var(--rc);border-color:var(--rb);color:var(--red)}
+.topbar-btn.primary{background:var(--green);border:none;color:#000}
+
+.main{max-width:1100px;margin:0 auto;padding:24px}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px}
+.stat-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-value{font-size:26px;font-weight:800;line-height:1}
+.stat-value.green{color:var(--green)}
+.stat-value.gold{color:var(--gold)}
+.stat-value.accent{color:var(--accent)}
+.stat-sub{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* SECTION */
+.section{margin-bottom:24px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:14px;font-weight:700}
+
+/* TABLE */
+.table-wrap{background:var(--s2);border:1px solid var(--b1);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;text-align:left;border-bottom:1px solid var(--b1);background:var(--s2)}
+tbody tr{border-bottom:1px solid var(--b1);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--s3)}
+tbody td{padding:12px 16px;font-size:13px}
+.code-pill{display:inline-block;background:var(--s3);border:1px solid var(--b2);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;font-family:monospace;color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.4px}
+.status-badge.active{background:var(--gc);color:var(--green);border:1px solid var(--gb)}
+.status-badge.expired{background:var(--rc);color:var(--red);border:1px solid var(--rb)}
+.status-badge.pending{background:var(--goc);color:var(--gold);border:1px solid var(--gob)}
+.action-btn{background:var(--s3);border:1px solid var(--b2);color:var(--t1);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;margin-right:4px}
+.action-btn:hover{background:var(--s4)}
+.action-btn.green{background:var(--gc);border-color:var(--gb);color:var(--green)}
+.action-btn.red{background:var(--rc);border-color:var(--rb);color:var(--red)}
+
+/* ADD CODE MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--s2);border:1px solid var(--b2);border-radius:16px;width:100%;max-width:440px;animation:modalIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--b1)}
+.modal-title{font-size:15px;font-weight:800}
+.modal-close{background:var(--s3);border:none;color:var(--t2);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.field input,.field select{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:13px;padding:10px 12px;outline:none;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--green)}
+.modal-btn{width:100%;background:var(--green);border:none;color:#000;border-radius:8px;padding:11px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;margin-top:4px}
+.modal-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center;min-height:16px}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:13px}
+.empty-icon{font-size:40px;margin-bottom:10px}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;color:var(--t1);display:none;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .main{padding:16px}
+  table thead{display:none}
+  tbody td{display:block;padding:6px 16px}
+  tbody td:first-child{padding-top:14px}
+  tbody td:last-child{padding-bottom:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">📈</div>
+    <div class="login-title">Admin Dashboard</div>
+    <div class="login-sub">P&L Ledger — Owner Access Only</div>
+    <input type="password" id="admin-pass" class="login-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <button class="login-btn" onclick="adminLogin()">Sign In</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="topbar-logo">📈 P&L Ledger Admin</div>
+      <div class="topbar-badge">OWNER</div>
+    </div>
+    <div class="topbar-right">
+      <div style="font-size:12px;color:var(--t3)" id="last-updated"></div>
+      <button class="topbar-btn" onclick="loadData()">🔄 Refresh</button>
+      <button class="topbar-btn primary" onclick="openAddModal()">+ New Code</button>
+      <button class="topbar-btn danger" onclick="adminLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Codes</div>
+        <div class="stat-value accent" id="stat-codes">0</div>
+        <div class="stat-sub">influencer codes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Signups</div>
+        <div class="stat-value green" id="stat-signups">0</div>
+        <div class="stat-sub">from all codes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Subs</div>
+        <div class="stat-value green" id="stat-active">0</div>
+        <div class="stat-sub">currently paying</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Est. Revenue</div>
+        <div class="stat-value gold" id="stat-revenue">R0</div>
+        <div class="stat-sub">monthly recurring</div>
+      </div>
+    </div>
+
+    <!-- Influencer Codes Table -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Influencer Codes</div>
+        <div style="font-size:12px;color:var(--t3)" id="code-count"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Influencer</th>
+              <th>Discount</th>
+              <th>Signups</th>
+              <th>Active Subs</th>
+              <th>Revenue</th>
+              <th>Access Expires</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="codes-tbody">
+            <tr><td colspan="8"><div class="empty"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- All Users -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Registered Users</div>
+        <div style="font-size:12px;color:var(--t3)" id="user-count"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Display Name</th>
+              <th>Plan</th>
+              <th>Joined</th>
+              <th>Trades</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="5"><div class="empty"><div class="empty-icon">⏳</div>Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CODE MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">New Influencer Code</div>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Influencer Name</label>
+        <input type="text" id="f-name" placeholder="e.g. John Smith"/>
+      </div>
+      <div class="field">
+        <label>Promo Code</label>
+        <input type="text" id="f-code" placeholder="e.g. TRADEWITHSAM" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="field">
+        <label>Discount %</label>
+        <select id="f-discount">
+          <option value="10">10% off monthly</option>
+          <option value="15">15% off monthly</option>
+          <option value="20">20% off monthly</option>
+          <option value="25">25% off monthly</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Free Access Duration</label>
+        <select id="f-access">
+          <option value="1">1 month free</option>
+          <option value="2">2 months free</option>
+          <option value="3">3 months free</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Paddle Discount ID (optional)</label>
+        <input type="text" id="f-paddle" placeholder="e.g. dsc_xxxxxxxx"/>
+      </div>
+      <button class="modal-btn" onclick="saveCode()">Create Code</button>
+      <div class="modal-err" id="modal-err"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://fiucxbfhjmvdwfgnnxsa.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWN4YmZoam12ZHdmZ25ueHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODg4NTAsImV4cCI6MjA5NjE2NDg1MH0.6K5BNqVC9z0eiYbToy4EjMIwrwQflVodYdLqV2glU18';
+
+// ADMIN PASSWORD - change this to something only you know
+const ADMIN_PASSWORD = 'HaydenAdmin2026!';
+
+let sb = null;
+let codes = [];
+let users = [];
+
+function getSB() {
+  if (!sb) sb = window.supabase.createClient(SB_URL, SB_ANON);
+  return sb;
+}
+
+// ── AUTH ──
+function adminLogin() {
+  const pass = document.getElementById('admin-pass').value;
+  const err  = document.getElementById('login-err');
+  if (pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem('admin_auth', 'true');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  } else {
+    err.textContent = 'Incorrect password.';
+    setTimeout(() => err.textContent = '', 2000);
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('admin_auth');
+  location.reload();
+}
+
+// ── LOAD DATA ──
+async function loadData() {
+  document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+  await Promise.all([loadCodes(), loadUsers()]);
+  updateStats();
+}
+
+async function loadCodes() {
+  try {
+    const { data, error } = await getSB()
+      .from('influencer_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    codes = data || [];
+    renderCodes();
+  } catch(e) {
+    console.error('loadCodes error:', e);
+    codes = [];
+    renderCodes();
+  }
+}
+
+async function loadUsers() {
+  try {
+    const { data, error } = await getSB()
+      .from('pnl_ledger_data')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    users = data || [];
+    renderUsers();
+  } catch(e) {
+    console.error('loadUsers error:', e);
+    users = [];
+    renderUsers();
+  }
+}
+
+// ── RENDER CODES ──
+function renderCodes() {
+  const tbody = document.getElementById('codes-tbody');
+  document.getElementById('code-count').textContent = codes.length + ' codes';
+
+  if (!codes.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">🎯</div>No influencer codes yet.<br>Click "+ New Code" to create your first one.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = codes.map(c => {
+    const now = new Date();
+    const expires = c.access_expires_at ? new Date(c.access_expires_at) : null;
+    const isActive = expires && expires > now;
+    const isExpired = expires && expires <= now;
+    const statusBadge = isActive
+      ? `<span class="status-badge active">● Active</span>`
+      : isExpired
+        ? `<span class="status-badge expired">● Expired</span>`
+        : `<span class="status-badge pending">● No access</span>`;
+
+    const expiresStr = expires
+      ? expires.toLocaleDateString('en-ZA', {day:'numeric',month:'short',year:'numeric'})
+      : '—';
+
+    const revenue = c.active_subs * 79 * 0.9; // 10% discount applied
+
+    return `<tr>
+      <td><span class="code-pill">${c.code}</span></td>
+      <td style="font-weight:600">${c.influencer_name}</td>
+      <td style="color:var(--gold);font-weight:700">${c.discount_pct||10}% off</td>
+      <td><span style="color:var(--green);font-weight:700">${c.signups || 0}</span></td>
+      <td><span style="color:var(--accent);font-weight:700">${c.active_subs || 0}</span></td>
+      <td style="color:var(--gold);font-weight:700">R${revenue.toFixed(0)}/mo</td>
+      <td style="color:${isExpired?'var(--red)':isActive?'var(--green)':'var(--t3)'};font-size:12px">${expiresStr}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <button class="action-btn green" onclick="renewAccess('${c.id}','${c.influencer_name}')">🔄 Renew</button>
+        <button class="action-btn red" onclick="revokeAccess('${c.id}','${c.influencer_name}')">✕ Revoke</button>
+        <button class="action-btn" onclick="copyCode('${c.code}')">📋 Copy</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── RENDER USERS ──
+function renderUsers() {
+  const tbody = document.getElementById('users-tbody');
+  document.getElementById('user-count').textContent = users.length + ' users';
+
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">👤</div>No users yet.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => {
+    let tradeCount = 0;
+    let isPro = false;
+    try {
+      const trades = JSON.parse(u.trades_data || '{}');
+      tradeCount = Object.values(trades).flat().filter(t=>!t.noTrade).length;
+    } catch(e) {}
+    try {
+      const sub = JSON.parse(u.pro_data || 'null');
+      isPro = sub && sub.pro && (sub.lifetime || sub.expires > Date.now());
+    } catch(e) {}
+
+    const email = u.user_email || u.user_id?.slice(0,12) + '...';
+    const name  = u.user_name  || '—';
+
+    return `<tr>
+      <td style="font-size:12px;color:var(--t2)">${email}</td>
+      <td style="font-weight:600;color:var(--t1)">${name}</td>
+      <td>${isPro
+        ? `<span class="status-badge active">● Pro</span>`
+        : `<span class="status-badge pending">● Free</span>`}
+      </td>
+      <td style="font-size:12px;color:var(--t3)">${new Date(u.updated_at||Date.now()).toLocaleDateString('en-ZA')}</td>
+      <td style="color:var(--green);font-weight:700">${tradeCount}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── STATS ──
+function updateStats() {
+  const totalSignups  = codes.reduce((s,c) => s + (c.signups||0), 0);
+  const totalActive   = codes.reduce((s,c) => s + (c.active_subs||0), 0);
+  const totalRevenue  = codes.reduce((s,c) => s + ((c.active_subs||0) * 79 * 0.9), 0);
+
+  document.getElementById('stat-codes').textContent    = codes.length;
+  document.getElementById('stat-signups').textContent  = totalSignups;
+  document.getElementById('stat-active').textContent   = totalActive;
+  document.getElementById('stat-revenue').textContent  = 'R' + Math.round(totalRevenue);
+}
+
+// ── CODE ACTIONS ──
+async function renewAccess(id, name) {
+  const months = parseInt(prompt(`Renew access for ${name}?\nHow many months?`, '1'));
+  if (!months || months < 1) return;
+  const expires = new Date();
+  expires.setMonth(expires.getMonth() + months);
+  const { error } = await getSB()
+    .from('influencer_codes')
+    .update({ access_expires_at: expires.toISOString() })
+    .eq('id', id);
+  if (error) { showToast('❌ Error: ' + error.message); return; }
+  showToast(`✅ ${name} access renewed for ${months} month(s)!`);
+  loadData();
+}
+
+async function revokeAccess(id, name) {
+  if (!confirm(`Revoke access for ${name}? They will lose Pro access.`)) return;
+  const { error } = await getSB()
+    .from('influencer_codes')
+    .update({ access_expires_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { showToast('❌ Error: ' + error.message); return; }
+  showToast(`⛔ ${name}'s access revoked.`);
+  loadData();
+}
+
+function copyCode(code) {
+  navigator.clipboard.writeText(code).then(() => showToast('📋 Copied: ' + code));
+}
+
+// ── ADD CODE MODAL ──
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('f-name').focus();
+  document.getElementById('modal-err').textContent = '';
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('add-modal')) closeAddModal();
+});
+
+async function saveCode() {
+  const name     = document.getElementById('f-name').value.trim();
+  const code     = document.getElementById('f-code').value.trim().toUpperCase();
+  const paddle   = document.getElementById('f-paddle').value.trim();
+  const months   = parseInt(document.getElementById('f-access').value);
+  const err      = document.getElementById('modal-err');
+
+  if (!name) { err.textContent = 'Please enter influencer name.'; return; }
+  if (!code || code.length < 3) { err.textContent = 'Please enter a valid code (min 3 chars).'; return; }
+
+  const expires = new Date();
+  expires.setMonth(expires.getMonth() + months);
+
+  const discountPct = parseInt(document.getElementById('f-discount').value) || 10;
+  const { error } = await getSB()
+    .from('influencer_codes')
+    .insert({
+      code,
+      influencer_name: name,
+      paddle_discount_id: paddle || null,
+      discount_pct: discountPct,
+      access_expires_at: expires.toISOString(),
+      signups: 0,
+      active_subs: 0
+    });
+
+  if (error) {
+    err.textContent = error.code === '23505'
+      ? 'That code already exists. Try a different one.'
+      : 'Error: ' + error.message;
+    return;
+  }
+
+  closeAddModal();
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-code').value = '';
+  document.getElementById('f-paddle').value = '';
+  showToast('✅ Code created: ' + code);
+  loadData();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ── INIT ──
+if (sessionStorage.getItem('admin_auth') === 'true') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+document.getElementById('admin-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') adminLogin();
+});
+</script>
+</body>
+</html>
