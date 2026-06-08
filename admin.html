@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>P&L Ledger — Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--s1:#111;--s2:#161616;--s3:#1e1e1e;--s4:#252525;
+  --b1:#222;--b2:#2e2e2e;--b3:#3a3a3a;
+  --t1:#f0f0f0;--t2:#a0a0a0;--t3:#555;
+  --green:#22c55e;--red:#ef4444;--gold:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:200px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;bottom:0;left:0}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px}
+.logo-box{width:30px;height:30px;border-radius:7px;background:#000;border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--gold)}
+.logo-text{font-size:13px;font-weight:700;color:var(--t1)}
+.logo-sub{font-size:10px;color:var(--t3);margin-top:1px}
+.nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--t2);transition:all .15s;margin-bottom:2px}
+.nav-item:hover{background:var(--s3);color:var(--t1)}
+.nav-item.active{background:var(--s3);color:var(--t1)}
+.nav-item i{font-size:16px;width:18px;text-align:center}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--b1)}
+.back-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--t3);transition:all .15s}
+.back-btn:hover{color:var(--t1);background:var(--s3)}
+
+/* MAIN */
+.main{margin-left:200px;flex:1;padding:24px;min-height:100vh}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:20px;font-weight:800;color:var(--t1);margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--t3);margin-bottom:24px}
+
+/* CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:18px}
+.stat-label{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-val{font-size:28px;font-weight:800;color:var(--t1)}
+.stat-val.green{color:var(--green)}
+.stat-val.gold{color:var(--gold)}
+.stat-val.blue{color:var(--blue)}
+.stat-val.red{color:var(--red)}
+.stat-delta{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* TABLES */
+.table-card{background:var(--s2);border:1px solid var(--b1);border-radius:12px;margin-bottom:20px;overflow:hidden}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:13px;font-weight:700;color:var(--t1)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:9px 16px;text-align:left;color:var(--t3);font-weight:600;border-bottom:1px solid var(--b1);white-space:nowrap;background:var(--s3)}
+td{padding:10px 16px;color:var(--t1);border-bottom:1px solid var(--b1)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.badge-pro{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+.badge-free{background:var(--s4);color:var(--t3);border:1px solid var(--b2)}
+.badge-inf{background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.3)}
+.badge-green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.badge-red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+
+/* CHARTS */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{font-size:11px;color:var(--t2);width:100px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:18px;background:var(--s4);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.bar-val{font-size:11px;color:var(--t2);width:60px;flex-shrink:0}
+
+/* MISC */
+.refresh-btn{background:var(--s3);border:1px solid var(--b2);color:var(--t2);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .15s}
+.refresh-btn:hover{color:var(--t1);border-color:var(--b3)}
+.loading{text-align:center;padding:40px;color:var(--t3);font-size:13px}
+.error{text-align:center;padding:40px;color:var(--red);font-size:13px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.section-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--t3)}
+.info-val{color:var(--t1);font-weight:600}
+.last-updated{font-size:10px;color:var(--t3);text-align:right;margin-bottom:8px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(245,158,11,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-box">P&L</div>
+    <div>
+      <div class="logo-text">P&L Ledger</div>
+      <div class="logo-sub">Admin Dashboard</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('overview')" id="nav-overview"><i class="ti ti-layout-dashboard"></i>Overview</div>
+    <div class="nav-item" onclick="showPage('users')" id="nav-users"><i class="ti ti-users"></i>Users</div>
+    <div class="nav-item" onclick="showPage('revenue')" id="nav-revenue"><i class="ti ti-coin"></i>Revenue</div>
+    <div class="nav-item" onclick="showPage('influencers')" id="nav-influencers"><i class="ti ti-star"></i>Influencers</div>
+    <div class="nav-item" onclick="showPage('activity')" id="nav-activity"><i class="ti ti-activity"></i>Activity</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="back-btn" onclick="window.close()"><i class="ti ti-arrow-left"></i>Back to app</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="page-title">Overview</div>
+    <div class="page-sub" id="overview-updated">Loading...</div>
+    <div class="stat-grid" id="overview-stats">
+      <div class="stat-card"><div class="stat-label">Total users</div><div class="stat-val blue" id="s-total">—</div><div class="stat-delta">All registered accounts</div></div>
+      <div class="stat-card"><div class="stat-label">Pro subscribers</div><div class="stat-val gold" id="s-pro">—</div><div class="stat-delta" id="s-pro-pct">— of total users</div></div>
+      <div class="stat-card"><div class="stat-label">Monthly MRR</div><div class="stat-val green" id="s-mrr">—</div><div class="stat-delta">R79/user estimated</div></div>
+      <div class="stat-card"><div class="stat-label">Active traders</div><div class="stat-val" id="s-active">—</div><div class="stat-delta">Logged trades this week</div></div>
+      <div class="stat-card"><div class="stat-label">Total trades logged</div><div class="stat-val" id="s-trades">—</div><div class="stat-delta">Across all users</div></div>
+      <div class="stat-card"><div class="stat-label">Influencer codes</div><div class="stat-val purple" id="s-codes" style="color:var(--purple)">—</div><div class="stat-delta">Active codes</div></div>
+    </div>
+    <div class="two-col">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Recent signups</span><button class="refresh-btn" onclick="loadAll()"><i class="ti ti-refresh"></i>Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Email</th><th>Plan</th><th>Joined</th></tr></thead><tbody id="recent-signups"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody></table></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Most active users</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Email</th><th>Trades</th><th>Plan</th></tr></thead><tbody id="most-active"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="page" id="page-users">
+    <div class="page-title">Users</div>
+    <div class="page-sub">All registered accounts</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <input type="text" id="user-search" placeholder="Search by email..." oninput="filterUsers()" style="padding:8px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:12px;width:240px;font-family:inherit">
+      <select id="user-filter" onchange="filterUsers()" style="padding:8px 12px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:12px;font-family:inherit">
+        <option value="all">All plans</option>
+        <option value="pro">Pro only</option>
+        <option value="free">Free only</option>
+        <option value="influencer">Influencer</option>
+      </select>
+      <span id="user-count" style="font-size:12px;color:var(--t3);align-self:center"></span>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Email</th><th>Plan</th><th>Trades logged</th><th>Last active</th><th>Joined</th></tr></thead>
+        <tbody id="users-table"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- REVENUE -->
+  <div class="page" id="page-revenue">
+    <div class="page-title">Revenue</div>
+    <div class="page-sub">Subscription metrics</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Estimated MRR</div><div class="stat-val green" id="r-mrr">—</div><div class="stat-delta">Pro × R79/month</div></div>
+      <div class="stat-card"><div class="stat-label">Estimated ARR</div><div class="stat-val green" id="r-arr">—</div><div class="stat-delta">MRR × 12</div></div>
+      <div class="stat-card"><div class="stat-label">Pro subscribers</div><div class="stat-val gold" id="r-pro">—</div><div class="stat-delta">Paying users</div></div>
+      <div class="stat-card"><div class="stat-label">Conversion rate</div><div class="stat-val" id="r-conv">—</div><div class="stat-delta">Free → Pro</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><span class="table-title">Pro subscribers</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Email</th><th>Type</th><th>Since</th><th>Value</th></tr></thead>
+        <tbody id="pro-table"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- INFLUENCERS -->
+  <div class="page" id="page-influencers">
+    <div class="page-title">Influencer codes</div>
+    <div class="page-sub">Active promo codes and usage</div>
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-title">All codes</span>
+        <button class="refresh-btn" onclick="loadInfluencers()"><i class="ti ti-refresh"></i>Refresh</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Code</th><th>Type</th><th>Discount</th><th>Uses</th><th>Influencer email</th><th>Created</th><th>Status</th></tr></thead>
+        <tbody id="influencer-table"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY -->
+  <div class="page" id="page-activity">
+    <div class="page-title">Activity</div>
+    <div class="page-sub">Trading patterns across all users</div>
+    <div class="two-col">
+      <div class="table-card" style="padding:18px">
+        <div class="section-title">Trades by day of week</div>
+        <div id="activity-days" class="loading">Loading...</div>
+      </div>
+      <div class="table-card" style="padding:18px">
+        <div class="section-title">Most traded symbols</div>
+        <div id="activity-symbols" class="loading">Loading...</div>
+      </div>
+    </div>
+    <div class="table-card" style="padding:18px;margin-bottom:20px">
+      <div class="section-title">Platform stats</div>
+      <div id="platform-stats"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL  = 'https://fiucxbfhjmvdwfgnnxsa.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWN4YmZoam12ZHdmZ25ueHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODg4NTAsImV4cCI6MjA5NjE2NDg1MH0.6K5BNqVC9z0eiYbToy4EjMIwrwQflVodYdLqV2glU18';
+const OWNER_EMAIL = 'stresstosuccses@gmail.com';
+const MONTHLY_PRICE = 79;
+
+let sb, allUsers = [], allCodes = [], currentToken = null;
+
+async function init() {
+  // Check session from localStorage (same key as main app)
+  const stored = localStorage.getItem('pnl_sb_session');
+  if (!stored) { showAuthWall(); return; }
+  const session = JSON.parse(stored);
+  const email = session?.user?.email;
+  if (email !== OWNER_EMAIL) { showAuthWall(); return; }
+  currentToken = session.access_token;
+  loadAll();
+}
+
+function showAuthWall() {
+  document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);flex-direction:column;gap:16px">
+    <div style="font-size:32px">🔒</div>
+    <div style="font-size:16px;font-weight:700;color:var(--t1)">Owner access only</div>
+    <div style="font-size:12px;color:var(--t3)">Sign in to the main app first, then open admin.</div>
+    <button onclick="window.close()" style="background:var(--s3);border:1px solid var(--b2);color:var(--t1);border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px">← Go back</button>
+  </div>`;
+}
+
+async function sbFetch(path) {
+  const res = await fetch(SB_URL + path, {
+    headers: { 'apikey': SB_ANON, 'Authorization': 'Bearer ' + (currentToken || SB_ANON) }
+  });
+  return res.json();
+}
+
+async function loadAll() {
+  document.getElementById('overview-updated').textContent = 'Loading...';
+  await Promise.all([loadUsers(), loadInfluencers()]);
+  renderOverview();
+  renderActivity();
+  document.getElementById('overview-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-ZA');
+}
+
+async function loadUsers() {
+  try {
+    const rows = await sbFetch('/rest/v1/pnl_ledger_data?select=*&order=user_id');
+    allUsers = (rows || []).map(row => {
+      let settings = {}, trades = {}, badges = {};
+      try { settings = JSON.parse(row.settings_data || '{}'); } catch(e) {}
+      try { trades = JSON.parse(row.trades_data || '{}'); } catch(e) {}
+      try { badges = JSON.parse(row.badges_data || '{}'); } catch(e) {}
+
+      // Count total trades
+      let tradeCount = 0;
+      let lastActive = null;
+      let symbols = [];
+      Object.entries(trades).forEach(([dateKey, dayData]) => {
+        const t = dayData.trades || [];
+        tradeCount += t.length;
+        if (t.length > 0) {
+          if (!lastActive || dateKey > lastActive) lastActive = dateKey;
+          t.forEach(tr => { if (tr.symbol) symbols.push(tr.symbol); });
+        }
+      });
+
+      // Determine plan
+      const currency = settings.cur || 'R';
+      const isPro = settings.isPro || settings.pro || false;
+      const isInfluencer = settings.influencer || false;
+      const email = settings.email || row.user_id;
+      const joined = settings.joinedAt || null;
+
+      return { uid: row.user_id, email, isPro, isInfluencer, tradeCount, lastActive, joined, symbols, settings };
+    });
+    renderUsersTable();
+  } catch(e) {
+    console.error('loadUsers error:', e);
+  }
+}
+
+async function loadInfluencers() {
+  try {
+    const rows = await sbFetch('/rest/v1/influencer_codes?select=*&order=created_at.desc');
+    allCodes = rows || [];
+    renderInfluencerTable();
+  } catch(e) {
+    console.error('loadInfluencers error:', e);
+  }
+}
+
+function renderOverview() {
+  const total = allUsers.length;
+  const pro = allUsers.filter(u => u.isPro).length;
+  const influencers = allUsers.filter(u => u.isInfluencer).length;
+  const mrr = (pro - influencers) * MONTHLY_PRICE;
+  const now = new Date();
+  const weekAgo = new Date(now - 7*86400000);
+  const active = allUsers.filter(u => u.lastActive && new Date(u.lastActive) >= weekAgo).length;
+  const totalTrades = allUsers.reduce((a,u) => a + u.tradeCount, 0);
+  const codes = allCodes.length;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-pro').textContent = pro;
+  document.getElementById('s-pro-pct').textContent = total ? Math.round(pro/total*100) + '% of total users' : '0%';
+  document.getElementById('s-mrr').textContent = 'R' + mrr.toLocaleString();
+  document.getElementById('s-active').textContent = active;
+  document.getElementById('s-trades').textContent = totalTrades.toLocaleString();
+  document.getElementById('s-codes').textContent = codes;
+
+  // Revenue page
+  document.getElementById('r-mrr').textContent = 'R' + mrr.toLocaleString();
+  document.getElementById('r-arr').textContent = 'R' + (mrr*12).toLocaleString();
+  document.getElementById('r-pro').textContent = pro;
+  document.getElementById('r-conv').textContent = total ? Math.round(pro/total*100) + '%' : '0%';
+
+  // Recent signups
+  const recent = [...allUsers].sort((a,b) => (b.joined||'').localeCompare(a.joined||'')).slice(0,8);
+  document.getElementById('recent-signups').innerHTML = recent.length
+    ? recent.map(u => `<tr>
+        <td>${u.email}</td>
+        <td>${planBadge(u)}</td>
+        <td style="color:var(--t3)">${u.joined ? new Date(u.joined).toLocaleDateString('en-ZA') : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:var(--t3);padding:20px">No users yet</td></tr>';
+
+  // Most active
+  const mostActive = [...allUsers].sort((a,b) => b.tradeCount - a.tradeCount).slice(0,8);
+  document.getElementById('most-active').innerHTML = mostActive.filter(u=>u.tradeCount>0).length
+    ? mostActive.filter(u=>u.tradeCount>0).map(u => `<tr>
+        <td>${u.email}</td>
+        <td style="color:var(--green);font-weight:700">${u.tradeCount}</td>
+        <td>${planBadge(u)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:var(--t3);padding:20px">No trades yet</td></tr>';
+
+  // Pro table
+  const proUsers = allUsers.filter(u => u.isPro);
+  document.getElementById('pro-table').innerHTML = proUsers.length
+    ? proUsers.map(u => `<tr>
+        <td>${u.email}</td>
+        <td>${planBadge(u)}</td>
+        <td style="color:var(--t3)">${u.joined ? new Date(u.joined).toLocaleDateString('en-ZA') : '—'}</td>
+        <td style="color:var(--green);font-weight:700">${u.isInfluencer ? 'R0' : 'R' + MONTHLY_PRICE + '/mo'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:20px">No pro users yet</td></tr>';
+}
+
+let filteredUsers = [];
+function renderUsersTable() {
+  filteredUsers = [...allUsers];
+  filterUsers();
+}
+
+function filterUsers() {
+  const q = (document.getElementById('user-search')?.value || '').toLowerCase();
+  const plan = document.getElementById('user-filter')?.value || 'all';
+  filteredUsers = allUsers.filter(u => {
+    const matchEmail = !q || u.email.toLowerCase().includes(q);
+    const matchPlan = plan === 'all' || (plan === 'pro' && u.isPro) || (plan === 'free' && !u.isPro) || (plan === 'influencer' && u.isInfluencer);
+    return matchEmail && matchPlan;
+  });
+  document.getElementById('user-count').textContent = filteredUsers.length + ' users';
+  document.getElementById('users-table').innerHTML = filteredUsers.length
+    ? filteredUsers.map(u => `<tr>
+        <td>${u.email}</td>
+        <td>${planBadge(u)}</td>
+        <td style="color:${u.tradeCount>0?'var(--green)':'var(--t3)'};font-weight:${u.tradeCount>0?'700':'400'}">${u.tradeCount}</td>
+        <td style="color:var(--t3)">${u.lastActive || '—'}</td>
+        <td style="color:var(--t3)">${u.joined ? new Date(u.joined).toLocaleDateString('en-ZA') : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px">No users match</td></tr>';
+}
+
+function renderInfluencerTable() {
+  document.getElementById('influencer-table').innerHTML = allCodes.length
+    ? allCodes.map(c => `<tr>
+        <td style="font-weight:700;font-family:monospace;color:var(--gold)">${c.code}</td>
+        <td><span class="badge badge-inf">${c.type || 'discount'}</span></td>
+        <td style="color:var(--green)">${c.discount_pct ? c.discount_pct + '%' : (c.is_free ? 'FREE' : '—')}</td>
+        <td style="color:var(--t2)">${c.use_count || 0}</td>
+        <td style="color:var(--t3)">${c.influencer_email || '—'}</td>
+        <td style="color:var(--t3)">${c.created_at ? new Date(c.created_at).toLocaleDateString('en-ZA') : '—'}</td>
+        <td><span class="badge ${c.active !== false ? 'badge-green' : 'badge-red'}">${c.active !== false ? 'Active' : 'Inactive'}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:20px">No codes yet</td></tr>';
+}
+
+function renderActivity() {
+  // Day of week breakdown
+  const dayMap = { Mon:0, Tue:0, Wed:0, Thu:0, Fri:0, Sat:0, Sun:0 };
+  const symbolMap = {};
+  allUsers.forEach(u => {
+    u.symbols.forEach(sym => {
+      symbolMap[sym] = (symbolMap[sym]||0) + 1;
+    });
+  });
+
+  const maxDay = Math.max(...Object.values(dayMap), 1);
+  document.getElementById('activity-days').innerHTML = Object.entries(dayMap).map(([day, count]) => `
+    <div class="bar-row">
+      <span class="bar-label">${day}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxDay*100)}%;background:var(--blue)"></div></div>
+      <span class="bar-val">${count} trades</span>
+    </div>`).join('') || '<div style="color:var(--t3);font-size:12px">Not enough data yet</div>';
+
+  const topSymbols = Object.entries(symbolMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxSym = topSymbols.length ? topSymbols[0][1] : 1;
+  document.getElementById('activity-symbols').innerHTML = topSymbols.length
+    ? topSymbols.map(([sym, count]) => `
+      <div class="bar-row">
+        <span class="bar-label">${sym}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxSym*100)}%;background:var(--gold)"></div></div>
+        <span class="bar-val">${count}</span>
+      </div>`).join('')
+    : '<div style="color:var(--t3);font-size:12px">No trades logged yet</div>';
+
+  // Platform stats
+  document.getElementById('platform-stats').innerHTML = [
+    { l: 'Total users', v: allUsers.length },
+    { l: 'Pro subscribers', v: allUsers.filter(u=>u.isPro).length },
+    { l: 'Free users', v: allUsers.filter(u=>!u.isPro).length },
+    { l: 'Influencer accounts', v: allUsers.filter(u=>u.isInfluencer).length },
+    { l: 'Total trades logged', v: allUsers.reduce((a,u)=>a+u.tradeCount,0).toLocaleString() },
+    { l: 'Avg trades per user', v: allUsers.length ? Math.round(allUsers.reduce((a,u)=>a+u.tradeCount,0)/allUsers.length) : 0 },
+    { l: 'Active influencer codes', v: allCodes.filter(c=>c.active!==false).length },
+  ].map(r => `<div class="info-row"><span class="info-label">${r.l}</span><span class="info-val">${r.v}</span></div>`).join('');
+}
+
+function planBadge(u) {
+  if (u.isInfluencer) return '<span class="badge badge-inf">Influencer</span>';
+  if (u.isPro) return '<span class="badge badge-pro">Pro</span>';
+  return '<span class="badge badge-free">Free</span>';
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
