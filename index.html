@@ -99,8 +99,7 @@
 html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
 
 /* DESKTOP LAYOUT */
-#desktop{display:none;height:100vh;overflow:hidden}
-#mobile{display:flex}
+if(window.innerWidth>=1024){document.getElementById('desktop').style.display='flex';document.getElementById('mobile').style.display='none';}
 @media screen and (max-width:1023px){#desktop{display:none!important}#mobile{display:flex!important}}
 
 /* SIDEBAR */
