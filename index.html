@@ -99,9 +99,8 @@
 html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
 
 /* DESKTOP LAYOUT */
-if(window.innerWidth>=1024){document.getElementById('desktop').style.display='flex';document.getElementById('mobile').style.display='none';}
-@media screen and (max-width:1023px){#desktop{display:none!important}#mobile{display:flex!important}}
-
+#desktop{display:none;height:100vh;overflow:hidden}
+#mobile{display:flex}
 /* SIDEBAR */
 
 .sidebar{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:60px;flex-direction:row;border-right:none;border-top:1px solid var(--b1);z-index:9999}
@@ -1213,6 +1212,7 @@ let paddleReady = false;
 let selectedPlan = 'monthly';
 
 // Supabase config
+  if(window.innerWidth>=1024){document.getElementById('desktop').style.display='flex';document.getElementById('mobile').style.display='none';}
 const SB_URL  = 'https://fiucxbfhjmvdwfgnnxsa.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWN4YmZoam12ZHdmZ25ueHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODg4NTAsImV4cCI6MjA5NjE2NDg1MH0.6K5BNqVC9z0eiYbToy4EjMIwrwQflVodYdLqV2glU18';
 
